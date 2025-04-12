@@ -1,38 +1,106 @@
-.App {
+/* Container styling */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  padding-bottom: 450px; /* extra bottom padding to prevent content from being obscured */
+}
+/* Title styling */
+.title {
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Grouping of inputs */
+.input-group {
+  margin-bottom: 1rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Styling for individual detail groups */
+.detail-group {
+  margin-bottom: 0.5rem;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+/* Number input fields */
+.number-input {
+  margin-left: 10px;
+  padding: 5px;
 }
 
-.App-link {
-  color: #61dafb;
+/* Text input fields (e.g., search) */
+.text-input {
+  margin-bottom: 10px;
+  padding: 5px;
+  width: 100%;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Select input for storage choice */
+.select-input {
+  padding: 5px;
+  width: 100%;
+}
+
+/* Customer list styling */
+.customer-list {
+  height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+/* Individual customer item */
+.customer-item {
+  padding: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* Highlight selected customer items */
+.customer-item.selected {
+  background-color: #e0e0e0;
+}
+
+/* Submit button styling */
+.submit-button {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+/* Map section styling */
+.map-section {
+  margin-top: 2rem;
+}
+
+.fixed-map-container {
+  position: fixed;
+  bottom: 20px;          /* distance from the bottom of the viewport */
+  left: 50%;             /* center horizontally */
+  transform: translateX(-50%); /* center the container */
+  width: 80%;            /* or any width you prefer */
+  max-width: 800px;
+  height: 400px;         /* desired map box height */
+  border: 2px solid #ccc;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  z-index: 1000;         /* ensures the map stays on top */
+  background: #fff;
+}
+
+/* Ensure Leaflet tiles fill the container */
+.fixed-map-container .leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Result container styling */
+.result-container {
+  margin-top: 2rem;
+}
+
+/* Result output styling */
+.result-output {
+  white-space: pre-wrap;
+  text-align: left;
+  background: #f7f7f7;
+  padding: 10px;
+  border-radius: 4px;
 }
