@@ -3,13 +3,12 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-class Product(db.Model):
-    __tablename__ = 'Product'  # Must match the Azure table name exactly
+class Products(db.Model):
+    __tablename__ = 'Products'  # Must match the Azure table name exactly
 
-    ProductID = db.Column(db.Integer, primary_key=True)
+    ProductID = db.Column(db.String(6), primary_key=True)
     ProductName = db.Column(db.String(255), nullable=False)
-    ProductDescription = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ProductDescription = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f"<Product {self.ProductName}>"
@@ -19,19 +18,17 @@ class Product(db.Model):
             "ProductID": self.ProductID,
             "ProductName": self.ProductName,
             "ProductDescription": self.ProductDescription,
-            "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
-class Storage(db.Model):
-    __tablename__ = 'Storage'  # Make sure this matches your Azure table
+class Storages(db.Model):
+    __tablename__ = 'Storages'  # Make sure this matches your Azure table
 
-    StorageID = db.Column(db.Integer, primary_key=True)
+    StorageID = db.Column(db.String(3), primary_key=True)
     StorageName = db.Column(db.String(255), nullable=False)
     StorageAddress = db.Column(db.String(255), nullable=False)
     StorageLat = db.Column(db.Float, nullable=False)
     StorageLong = db.Column(db.Float, nullable=False)
-    StoragePhone = db.Column(db.String(20))  # Optional field
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    StoragePhone = db.Column(db.String(10), nullable=True)
 
     def __repr__(self):
         return f"<Storage {self.StorageName}>"
@@ -44,16 +41,14 @@ class Storage(db.Model):
             "StorageLat": self.StorageLat,
             "StorageLong": self.StorageLong,
             "StoragePhone": self.StoragePhone,
-            "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
-class Truck(db.Model):
-    __tablename__ = 'Truck'  # Ensure this matches the Azure table name
+class Trucks(db.Model):
+    __tablename__ = 'Trucks'  # Ensure this matches the Azure table name
 
-    TruckID = db.Column(db.Integer, primary_key=True)
+    TruckID = db.Column(db.String(3), primary_key=True)
     TruckLoad = db.Column(db.Integer, nullable=False)
-    TruckPhone = db.Column(db.String(20))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    TruckPhone = db.Column(db.String(10), nullable=True)
 
     def __repr__(self):
         return f"<Truck {self.TruckID}>"
@@ -63,18 +58,16 @@ class Truck(db.Model):
             "TruckID": self.TruckID,
             "TruckLoad": self.TruckLoad,
             "TruckPhone": self.TruckPhone,
-            "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
-class Customer(db.Model):
-    __tablename__ = 'Customer'  # Must match the Azure table name exactly
+class Customers(db.Model):
+    __tablename__ = 'Customers'  # Must match the Azure table name exactly
 
-    CustomerID = db.Column(db.Integer, primary_key=True)
+    CustomerID = db.Column(db.String(6), primary_key=True)
     CustomerName = db.Column(db.String(255), nullable=False)
     CustomerAddress = db.Column(db.String(255), nullable=False)
     CustomerLong = db.Column(db.Float, nullable=False)
     CustomerLat = db.Column(db.Float, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f"<Customer {self.CustomerName}>"
@@ -86,5 +79,4 @@ class Customer(db.Model):
             "CustomerAddress": self.CustomerAddress,
             "CustomerLong": self.CustomerLong,
             "CustomerLat": self.CustomerLat,
-            "created_at": self.created_at.isoformat() if self.created_at else None
         }

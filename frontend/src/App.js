@@ -1,212 +1,260 @@
-// src/DeliveryOptimizerSinglePage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MapDisplay from './MapDisplay';
 import './App.css';
 
-function DeliveryOptimizerSinglePage() {
-  // State for daily customer count.
+function App() {
   const [dailyCustomerCount, setDailyCustomerCount] = useState(0);
-
-  // Customer-related state.
   const [customers, setCustomers] = useState([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Truck & product details.
   const [numTrucks, setNumTrucks] = useState(0);
   const [productWeight, setProductWeight] = useState(0);
 
-  // Storage options and selected storage.
   const [storages, setStorages] = useState([]);
   const [selectedStorageId, setSelectedStorageId] = useState(null);
+  const [searchStorageTerm, setSearchStorageTerm] = useState("");
 
-  // Optimization result.
   const [optimizationResult, setOptimizationResult] = useState(null);
+  const suggestionRef = useRef(null);
 
-  // Fetch customers from backend database.
   useEffect(() => {
+    // fetch customers
     fetch("http://127.0.0.1:5000/customers")
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
-        // Assuming your API returns { "customers": [ ... ] }
-        setCustomers(data.customers);
+        setCustomers(data.customers.map(c => ({
+          id:       c.CustomerID,
+          name:     c.CustomerName,
+          address:  c.CustomerAddress,
+          location: [c.CustomerLat, c.CustomerLong],
+        })));
       })
-      .catch(err => console.error("Error fetching customers:", err));
-  }, []);
+      .catch(console.error);
 
-  // Fetch storages from backend database.
-  useEffect(() => {
+    // fetch storages
     fetch("http://127.0.0.1:5000/storages")
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
-        // Assuming your API returns { "storages": [ ... ] }
-        setStorages(data.storages);
-        // Set default storage if available.
-        if(data.storages && data.storages.length > 0) {
-          setSelectedStorageId(data.storages[0].id);
-        }
+        const list = data.storages.map(s => ({
+          id:       s.StorageID,
+          name:     s.StorageName,
+          address:  s.StorageAddress,
+          location: [s.StorageLat, s.StorageLong],
+        }));
+        setStorages(list);
+        if (list.length) setSelectedStorageId(list[0].id);
       })
-      .catch(err => console.error("Error fetching storages:", err));
+      .catch(console.error);
+
+    // close dropdowns on outside click
+    const onClickOutside = e => {
+      if (suggestionRef.current && !suggestionRef.current.contains(e.target)) {
+        setSearchTerm("");
+        setSearchStorageTerm("");
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  // Toggle customer selection.
-  const handleCustomerToggle = (customerId) => {
-    setSelectedCustomerIds((prevSelected) =>
-      prevSelected.includes(customerId)
-        ? prevSelected.filter((id) => id !== customerId)
-        : [...prevSelected, customerId]
+  // toggle a stop
+  const toggleCustomer = id =>
+    setSelectedCustomerIds(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
     );
-  };
 
-  // Filter customers based on search.
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.address.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // remove a stop tag
+  const removeCustomer = id =>
+    setSelectedCustomerIds(ids => ids.filter(x => x !== id));
 
-  // Handler to submit the form.
+  // remove storage tag
+  const removeStorage = () =>
+    setSelectedStorageId(null);
+
+  // live suggestions
+  const customerSuggestions = searchTerm.trim()
+    ? customers.filter(c =>
+        !selectedCustomerIds.includes(c.id) &&
+        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ).slice(0,5)
+    : [];
+
+  const storageSuggestions = searchStorageTerm.trim()
+    ? storages.filter(s =>
+        s.name.toLowerCase().includes(searchStorageTerm.toLowerCase()) ||
+        s.address.toLowerCase().includes(searchStorageTerm.toLowerCase())
+      ).slice(0,5)
+    : [];
+
+  // submit to backend
   const handleSubmit = async () => {
-    // Filter selected customers from database-sourced list.
-    const selectedCustomers = customers.filter((c) =>
-      selectedCustomerIds.includes(c.id)
+    const depot = storages.find(s => s.id === selectedStorageId)?.location;
+    if (!depot) return alert("Please select a storage first.");
+    const stops = selectedCustomerIds.map(id =>
+      customers.find(c => c.id === id).location
     );
-    // Map each customer to its location (assuming each customer has a 'location' property 
-    // that is an array like [lat, lng])
-    const customerLocations = selectedCustomers.map((c) => c.location);
-    const selectedStorage = storages.find(s => s.id === selectedStorageId);
-
     const payload = {
-      locations: customerLocations,                   // Customer coordinates.
-      num_vehicles: numTrucks,                         // Number of trucks.
-      depot: selectedStorage ? selectedStorage.location : null,  // Depot (storage) coordinates.
-      storage_address: selectedStorage ? selectedStorage.address : '',
+      locations:      [depot, ...stops],
+      num_vehicles:   numTrucks,
+      depot_index:    0,
       daily_customers: dailyCustomerCount,
-      total_weight: productWeight,
+      total_weight:   productWeight,
     };
-
     try {
-      const response = await fetch("http://127.0.0.1:5000/optimize", {
+      const res = await fetch("http://127.0.0.1:5000/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const jsonData = await response.json();
-      setOptimizationResult(jsonData);
-    } catch (error) {
-      console.error("Error optimizing routes:", error);
+      const json = await res.json();
+      setOptimizationResult(json);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to optimize routes.");
     }
   };
 
-  // Determine the routeData for the MapDisplay.
-  const routeData = optimizationResult &&
-    optimizationResult.routes &&
-    optimizationResult.routes.length > 0 &&
-    optimizationResult.routes[0].route
-      ? optimizationResult.routes[0].route
-      : [];
-
-  // Determine default map center from selected storage.
+  // map data
+  const routeData    = optimizationResult?.optimized_route?.routes?.[0]?.route || [];
   const defaultCenter = storages.find(s => s.id === selectedStorageId)?.location || [0, 0];
 
   return (
     <div className="container">
-      <h1 className="title">Delivery Optimizer</h1>
-      
-      {/* Form Inputs */}
-      <div className="input-group">
-        <label>
-          <strong>Daily Customer Count:</strong>
-          <input
-            type="number"
-            min="0"
-            value={dailyCustomerCount}
-            onChange={(e) => setDailyCustomerCount(Number(e.target.value))}
-            className="number-input"
-          />
-        </label>
-      </div>
-      
-      <div className="input-group">
-        <h2>Select Storage</h2>
-        <select
-          value={selectedStorageId || ''}
-          onChange={(e) => setSelectedStorageId(Number(e.target.value))}
-          className="select-input"
-        >
-          {storages.map(storage => (
-            <option key={storage.id} value={storage.id}>
-              {storage.name} - {storage.address}
-            </option>
-          ))}
-        </select>
-      </div>
-      
-      <div className="input-group">
-        <h2>Select Customers for Delivery</h2>
-        <input
-          type="text"
-          placeholder="Search customers..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="text-input"
-        />
-        <div className="customer-list">
-          {filteredCustomers.map((customer) => (
-            <div
-              key={customer.id}
-              onClick={() => handleCustomerToggle(customer.id)}
-              className={`customer-item ${selectedCustomerIds.includes(customer.id) ? 'selected' : ''}`}
-            >
-              <strong>{customer.name}</strong>
-              <br />
-              <small>{customer.address}</small>
+      <header className="header">
+        <div className="header-left">
+          <h1 className="route-name">Delivery Optimizer</h1>
+          <p className="route-desc">Your daily route optimization solution</p>
+        </div>
+        <div className="header-right">
+          <button className="btn new-route">+ New Route</button>
+        </div>
+      </header>
+
+      <div className="content">
+        <aside className="sidebar" ref={suggestionRef}>
+
+          {/* --- Storage Live Search --- */}
+          <div className="storages-section">
+            <h3>Storage</h3>
+
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search storage…"
+              value={searchStorageTerm}
+              onChange={e => setSearchStorageTerm(e.target.value)}
+            />
+
+            <div className="selected-tags">
+              {selectedStorageId && (() => {
+                const s = storages.find(x => x.id === selectedStorageId);
+                return (
+                  <span className="tag" key={s.id}>
+                    {s.name}
+                    <button onClick={removeStorage}>×</button>
+                  </span>
+                );
+              })()}
             </div>
-          ))}
-          {filteredCustomers.length === 0 && (
-            <p>No customers match your search criteria.</p>
-          )}
-        </div>
-      </div>
-      
-      <div className="input-group">
-        <h2>Truck & Product Details</h2>
-        <div className="detail-group">
-          <label>
-            Number of Trucks Needed:
+
+            {storageSuggestions.length > 0 && (
+              <ul className="suggestions-list">
+                {storageSuggestions.map(s => (
+                  <li key={s.id} onClick={() => {
+                    setSelectedStorageId(s.id);
+                    setSearchStorageTerm("");
+                  }}>
+                    {s.name} — {s.address}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* --- Customer Live Search --- */}
+          <div className="stops-section">
+            <h3>Stops</h3>
+
             <input
-              type="number"
-              min="0"
-              value={numTrucks}
-              onChange={(e) => setNumTrucks(Number(e.target.value))}
-              className="number-input"
+              type="text"
+              className="search-input"
+              placeholder="Type to search customers…"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
             />
-          </label>
-        </div>
-        <div className="detail-group">
-          <label>
-            Product Weight (kg):
-            <input
-              type="number"
-              min="0"
-              value={productWeight}
-              onChange={(e) => setProductWeight(Number(e.target.value))}
-              className="number-input"
+
+            <div className="selected-tags">
+              {selectedCustomerIds.map(id => {
+                const c = customers.find(x => x.id === id);
+                return (
+                  <span className="tag" key={id}>
+                    {c.name}
+                    <button onClick={() => removeCustomer(id)}>×</button>
+                  </span>
+                );
+              })}
+            </div>
+
+            {customerSuggestions.length > 0 && (
+              <ul className="suggestions-list">
+                {customerSuggestions.map(c => (
+                  <li key={c.id} onClick={() => {
+                    toggleCustomer(c.id);
+                    setSearchTerm("");
+                  }}>
+                    {c.name} — {c.address}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
+
+        <main className="main-area">
+          <div className="form-section">
+            <div className="input-group">
+              <label>Daily Customer Count:</label>
+              <input
+                type="number" min="0"
+                value={dailyCustomerCount}
+                onChange={e => setDailyCustomerCount(+e.target.value)}
+                className="number-input"
+              />
+            </div>
+            <div className="input-group">
+              <label>Trucks Needed:</label>
+              <input
+                type="number" min="0"
+                value={numTrucks}
+                onChange={e => setNumTrucks(+e.target.value)}
+                className="number-input"
+              />
+            </div>
+            <div className="input-group">
+              <label>Product Weight (kg):</label>
+              <input
+                type="number" min="0"
+                value={productWeight}
+                onChange={e => setProductWeight(+e.target.value)}
+                className="number-input"
+              />
+            </div>
+            <button onClick={handleSubmit} className="btn optimize-btn">
+              Submit for Optimized Route
+            </button>
+          </div>
+
+          <div className="map-container">
+            <MapDisplay
+              routeData={routeData}
+              defaultCenter={defaultCenter}
+              zoom={13}
             />
-          </label>
-        </div>
+          </div>
+        </main>
       </div>
-      
-      <button onClick={handleSubmit} className="submit-button">
-        Submit for Optimized Route
-      </button>
-      
-      {/* Fixed Map Container at Bottom */}
-      <div className="fixed-map-container">
-        <MapDisplay routeData={routeData} defaultCenter={defaultCenter} />
-      </div>
-      
-      {/* Optionally display the optimization result JSON above the map if desired */}
+
       {optimizationResult && (
         <div className="result-container">
           <h2>Optimization Result</h2>
@@ -219,4 +267,4 @@ function DeliveryOptimizerSinglePage() {
   );
 }
 
-export default DeliveryOptimizerSinglePage;
+export default App;

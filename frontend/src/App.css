@@ -1,106 +1,226 @@
-/* Container styling */
+/* ---------------- Global Layout ---------------- */
 .container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  padding-bottom: 450px; /* extra bottom padding to prevent content from being obscured */
-}
-/* Title styling */
-.title {
-  text-align: center;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f3f4f6;
 }
 
-/* Grouping of inputs */
-.input-group {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #4a90e2, #357ab8);
+  color: #fff;
+  padding: 1.2rem 2rem;
+  border-radius: 4px;
   margin-bottom: 1rem;
 }
-
-/* Styling for individual detail groups */
-.detail-group {
-  margin-bottom: 0.5rem;
+.header-left {
+  display: flex;
+  flex-direction: column;
 }
-
-/* Number input fields */
-.number-input {
-  margin-left: 10px;
-  padding: 5px;
+.route-name {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
 }
-
-/* Text input fields (e.g., search) */
-.text-input {
-  margin-bottom: 10px;
-  padding: 5px;
-  width: 100%;
+.route-desc {
+  font-size: 1rem;
+  margin: 0;
 }
-
-/* Select input for storage choice */
-.select-input {
-  padding: 5px;
-  width: 100%;
-}
-
-/* Customer list styling */
-.customer-list {
-  height: 250px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-}
-
-/* Individual customer item */
-.customer-item {
-  padding: 8px;
-  margin-bottom: 4px;
-  cursor: pointer;
+.header-right .btn.new-route {
+  background-color: #fff;
+  color: #357ab8;
+  padding: 0.8rem 1.2rem;
+  border: none;
   border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-/* Highlight selected customer items */
-.customer-item.selected {
-  background-color: #e0e0e0;
+.content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  margin-top: 1rem;
 }
 
-/* Submit button styling */
-.submit-button {
-  padding: 10px 20px;
-  font-size: 16px;
+.sidebar {
+  width: 320px;
+  background-color: #fff;
+  border-right: 1px solid #ddd;
+  padding: 1.5rem;
+  overflow-y: auto;
 }
 
-/* Map section styling */
-.map-section {
-  margin-top: 2rem;
+.main-area {
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
 }
 
-.fixed-map-container {
-  position: fixed;
-  bottom: 20px;          /* distance from the bottom of the viewport */
-  left: 50%;             /* center horizontally */
-  transform: translateX(-50%); /* center the container */
-  width: 80%;            /* or any width you prefer */
-  max-width: 800px;
-  height: 400px;         /* desired map box height */
-  border: 2px solid #ccc;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  z-index: 1000;         /* ensures the map stays on top */
-  background: #fff;
+.form-section {
+  background-color: #f7f9fc;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  border: 1px solid #dde1e7;
 }
 
-/* Ensure Leaflet tiles fill the container */
-.fixed-map-container .leaflet-container {
-  height: 100%;
-  width: 100%;
+.input-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.input-group label {
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+.number-input, .select-input {
+  padding: 0.5rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+.btn.optimize-btn {
+  background-color: #28a745;
+  color: #fff;
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
 }
 
-/* Result container styling */
+.map-container {
+  flex: 1;
+  margin-top: 1rem;
+  border: 2px solid #cbd5e0;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 400px; /* or auto if you prefer */
+}
+
+/* numbered badge for stops */
+.number-marker {
+  background: #357ab8;
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+  user-select: none;
+}
+
 .result-container {
-  margin-top: 2rem;
+  margin-top: 1rem;
+  width: 100%;
+  background-color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
 }
-
-/* Result output styling */
 .result-output {
   white-space: pre-wrap;
-  text-align: left;
-  background: #f7f7f7;
-  padding: 10px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* --------------- Sidebar Sections --------------- */
+.storages-section h3,
+.stops-section h3 {
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 500;
+}
+
+/* --------------- Live‐Search & Tags --------------- */
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* container for tag pills */
+.selected-tags {
+  width: 100%;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+/* each tag pill */
+.tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #e0f2ff;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  flex: 1 1 auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+}
+
+/* red “×” button on tags */
+.tag button {
+  background: none;
+  border: none;
+  color: red;
+  font-weight: bold;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* suggestion dropdown */
+.suggestions-list {
+  margin-top: 0.25rem;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.suggestions-list li {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+.suggestions-list li:hover {
+  background: #f0f0f0;
+}
+
+/* -------- Optional Utility Buttons -------- */
+.btn.manage-drivers {
+  background: none;
+  border: 1px solid #357ab8;
+  color: #357ab8;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
 }

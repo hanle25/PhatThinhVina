@@ -4,4 +4,9 @@ Flask-SQLAlchemy
 Flask-Migrate 
 python-dotenv
 ortools 
-pyodbc 
+pyodbc
+requests
+fastapi
+uvicorn[standard]
+pydantic
+azure-identity
