@@ -1,4 +1,4 @@
-/* ---------------- Global Layout ---------------- */
+/* Global Layout */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -138,14 +138,14 @@
   color: #333;
 }
 
-/* --------------- Sidebar Sections --------------- */
+/* Sidebar Sections */
 .storages-section h3,
 .stops-section h3 {
   margin: 1rem 0 0.5rem 0;
   font-weight: 500;
 }
 
-/* --------------- Live‐Search & Tags --------------- */
+/* Live‐Search & Tags */
 .search-input {
   width: 100%;
   padding: 0.5rem;
@@ -206,6 +206,7 @@
   background: #fff;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+
 .suggestions-list li {
   padding: 0.5rem;
   cursor: pointer;
@@ -214,7 +215,7 @@
   background: #f0f0f0;
 }
 
-/* -------- Optional Utility Buttons -------- */
+/* Optional Utility Buttons */
 .btn.manage-drivers {
   background: none;
   border: 1px solid #357ab8;

@@ -3,17 +3,18 @@ import MapDisplay from './MapDisplay';
 import './App.css';
 
 function App() {
-  const [dailyCustomerCount, setDailyCustomerCount] = useState(0);
+  const [dailyCustomerCount, setDailyCustomerCount] = useState("");
+
   const [customers, setCustomers] = useState([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [numTrucks, setNumTrucks] = useState(0);
-  const [productWeight, setProductWeight] = useState(0);
-
   const [storages, setStorages] = useState([]);
   const [selectedStorageId, setSelectedStorageId] = useState(null);
   const [searchStorageTerm, setSearchStorageTerm] = useState("");
+
+  const [numTrucks, setNumTrucks] = useState("");
+  const [productWeight, setProductWeight] = useState("");
 
   const [optimizationResult, setOptimizationResult] = useState(null);
   const suggestionRef = useRef(null);
