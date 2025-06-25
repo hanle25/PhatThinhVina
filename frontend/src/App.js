@@ -1,269 +1,273 @@
-import React, { useState, useEffect, useRef } from 'react';
-import MapDisplay from './MapDisplay';
-import './App.css';
+import React, { useState, useEffect, useRef } from "react";
+import "./App.css";
+import CustomerBlock from "./components/CustomerBlock";
+import AssignmentResult from "./components/AssignmentResult";
+import ErrorBoundary from "./components/ErrorBoundary";
+
+const API_FETCH_CUSTOMERS = process.env.REACT_APP_API_URL_CUSTOMERS;
+const API_FETCH_STORAGES = process.env.REACT_APP_API_URL_STORAGES;
+const API_FETCH_CATALOGS = process.env.REACT_APP_API_URL_CATALOGS;
+const API_ASSIGN_TRUCKS = process.env.REACT_APP_API_ASSIGN_TRUCKS;
+// const API_NAME_MAPS = process.env.REACT_APP_API_NAME_MAPS;
 
 function App() {
-  const [dailyCustomerCount, setDailyCustomerCount] = useState("");
-
   const [customers, setCustomers] = useState([]);
-  const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-
   const [storages, setStorages] = useState([]);
-  const [selectedStorageId, setSelectedStorageId] = useState(null);
-  const [searchStorageTerm, setSearchStorageTerm] = useState("");
-
-  const [numTrucks, setNumTrucks] = useState("");
-  const [productWeight, setProductWeight] = useState("");
-
-  const [optimizationResult, setOptimizationResult] = useState(null);
-  const suggestionRef = useRef(null);
+  const [categories, setCatalogs] = useState([]);
+  const [searchTerms, setSearchTerms] = useState([]);
+  const [customerSuggestions, setCustomerSuggestions] = useState([]);
+  const [customerBlocks, setCustomerBlocks] = useState([]);
+  const [assignedVehicles, setAssignedVehicles] = useState([]);
+  // const [customerNameMap, setCustomerNameMap] = useState({});
+  // const [storageNameMap, setStorageNameMap] = useState({});
+  const suggestionRefs = useRef([]);
 
   useEffect(() => {
-    // fetch customers
-    fetch("http://127.0.0.1:5000/customers")
+    fetch(API_FETCH_CUSTOMERS)
       .then(res => res.json())
       .then(data => {
         setCustomers(data.customers.map(c => ({
-          id:       c.CustomerID,
-          name:     c.CustomerName,
-          address:  c.CustomerAddress,
-          location: [c.CustomerLat, c.CustomerLong],
+          id: c.CustomerID,
+          name: c.CustomerName,
+          address: c.CustomerAddress,
+          location: [c.CustomerLat, c.CustomerLong]
         })));
-      })
-      .catch(console.error);
+      });
 
-    // fetch storages
-    fetch("http://127.0.0.1:5000/storages")
+    fetch(API_FETCH_STORAGES)
       .then(res => res.json())
       .then(data => {
-        const list = data.storages.map(s => ({
-          id:       s.StorageID,
-          name:     s.StorageName,
-          address:  s.StorageAddress,
-          location: [s.StorageLat, s.StorageLong],
-        }));
-        setStorages(list);
-        if (list.length) setSelectedStorageId(list[0].id);
-      })
-      .catch(console.error);
+        setStorages(data.storages.map(s => ({
+          id: s.StorageID,
+          name: s.StorageName,
+          address: s.StorageAddress,
+          location: [s.StorageLat, s.StorageLong]
+        })));
+      });
 
-    // close dropdowns on outside click
-    const onClickOutside = e => {
-      if (suggestionRef.current && !suggestionRef.current.contains(e.target)) {
-        setSearchTerm("");
-        setSearchStorageTerm("");
-      }
-    };
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
+    fetch(API_FETCH_CATALOGS)
+      .then(res => res.json())
+      .then(data => {
+        setCatalogs(data.catalogs.map(c => ({
+          id: c.CatalogID,
+          name: c.CatalogName
+        })));
+      });
   }, []);
 
-  // toggle a stop
-  const toggleCustomer = id =>
-    setSelectedCustomerIds(ids =>
-      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
-    );
+  useEffect(() => {
+    if (customerBlocks.length === 0) addCustomerBlock();
+  }, [customerBlocks.length]);
 
-  // remove a stop tag
-  const removeCustomer = id =>
-    setSelectedCustomerIds(ids => ids.filter(x => x !== id));
+  // useEffect(() => {
+  //   fetch(API_NAME_MAPS)
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setCustomerNameMap(data.customerNameMap || {});
+  //       setStorageNameMap(data.storageNameMap || {});
+  //     })
+  //     .catch((err) => console.error("Failed to fetch name maps:", err));
+  // }, []);
 
-  // remove storage tag
-  const removeStorage = () =>
-    setSelectedStorageId(null);
-
-  // live suggestions
-  const customerSuggestions = searchTerm.trim()
-    ? customers.filter(c =>
-        !selectedCustomerIds.includes(c.id) &&
-        c.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ).slice(0,5)
-    : [];
-
-  const storageSuggestions = searchStorageTerm.trim()
-    ? storages.filter(s =>
-        s.name.toLowerCase().includes(searchStorageTerm.toLowerCase()) ||
-        s.address.toLowerCase().includes(searchStorageTerm.toLowerCase())
-      ).slice(0,5)
-    : [];
-
-  // submit to backend
-  const handleSubmit = async () => {
-    const depot = storages.find(s => s.id === selectedStorageId)?.location;
-    if (!depot) return alert("Please select a storage first.");
-    const stops = selectedCustomerIds.map(id =>
-      customers.find(c => c.id === id).location
-    );
-    const payload = {
-      locations:      [depot, ...stops],
-      num_vehicles:   numTrucks,
-      depot_index:    0,
-      daily_customers: dailyCustomerCount,
-      total_weight:   productWeight,
+  const addCustomerBlock = () => {
+    const newBlock = {
+      id: Date.now() + Math.random(),
+      CustomerID: "",
+      customerName: "",
+      productRows: [{
+        id: Date.now() + Math.random() + 1,
+        category: "",
+        quantity: "",
+        weight: "",
+        StorageID: "",
+        storageName: ""
+      }]
     };
+    setCustomerBlocks(prev => [...prev, newBlock]);
+    setSearchTerms(prev => [...prev, { customer: "" }]);
+    setCustomerSuggestions(prev => [...prev, []]);
+  };
+
+  const removeCustomerBlock = idx => {
+    setCustomerBlocks(prev => prev.filter((_, i) => i !== idx));
+    setSearchTerms(prev => prev.filter((_, i) => i !== idx));
+    setCustomerSuggestions(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateProductField = (blockIdx, prodIdx, field, value) => {
+    setCustomerBlocks(prev => prev.map((block, i) => {
+      if (i !== blockIdx) return block;
+      return {
+        ...block,
+        productRows: block.productRows.map((pr, j) =>
+          j === prodIdx ? { ...pr, [field]: value } : pr
+        )
+      };
+    }));
+  };
+
+  const handleSubmit = async () => {
+    for (let i = 0; i < customerBlocks.length; i++) {
+      const blk = customerBlocks[i];
+      if (!blk.CustomerID && blk.customerName.trim() !== "") {
+        const match = customers.find(c => c.name.toLowerCase() === blk.customerName.trim().toLowerCase());
+        if (match) blk.CustomerID = match.id;
+      }
+    }
+
+    for (let i = 0; i < customerBlocks.length; i++) {
+      const blk = customerBlocks[i];
+      blk.productRows.forEach(pr => {
+        if (!pr.StorageID && pr.storageName?.trim()) {
+          const match = storages.find(s => s.name.toLowerCase() === pr.storageName.trim().toLowerCase());
+          if (match) pr.StorageID = match.id;
+        }
+      });
+    }
+
+    const orders = [];
+    for (const blk of customerBlocks) {
+      if (!blk.CustomerID) return alert("Please select a customer.");
+      for (const pr of blk.productRows) {
+        if (!pr.category || !pr.weight || isNaN(parseFloat(pr.weight)) || !pr.StorageID) {
+          return alert("Invalid product details detected.");
+        }
+        const productName = categories.find(c => c.id === pr.category)?.name || "";
+        orders.push({
+          CustomerID: blk.CustomerID,
+          productName,
+          weight: parseFloat(pr.weight),
+          StorageID: pr.StorageID,
+          offRoute: false
+        });
+      }
+    }
+
     try {
-      const res = await fetch("http://127.0.0.1:5000/optimize", {
+      const response = await fetch(API_ASSIGN_TRUCKS, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ orders })
       });
-      const json = await res.json();
-      setOptimizationResult(json);
-    } catch (e) {
-      console.error(e);
-      alert("Failed to optimize routes.");
+      if (!response.ok) throw new Error("Failed to assign trucks");
+      const data = await response.json();
+      console.log("🚚 Backend response:", data);  // 👈 This shows what you're getting from the server
+      setAssignedVehicles(data.assigned_vehicles || []);
+
+    } catch (err) {
+      console.error(err);
+      alert("Submission failed. See console.");
     }
   };
 
-  // map data
-  const routeData    = optimizationResult?.optimized_route?.routes?.[0]?.route || [];
-  const defaultCenter = storages.find(s => s.id === selectedStorageId)?.location || [0, 0];
+  const handleCustomerSearch = (blockIdx, value) => {
+    setSearchTerms(prev => prev.map((t, i) => i === blockIdx ? { ...t, customer: value } : t));
+    const suggestions = value.trim()
+      ? customers.filter(c =>
+          c.name.toLowerCase().includes(value.toLowerCase()) &&
+          !customerBlocks.some((blk, i) => i !== blockIdx && blk.CustomerID === c.id)
+        ).slice(0, 5)
+      : [];
+    setCustomerSuggestions(prev => prev.map((arr, i) => i === blockIdx ? suggestions : arr));
+    setCustomerBlocks(prev => prev.map((blk, i) => i === blockIdx
+      ? { ...blk, customerName: value, CustomerID: "" }
+      : blk));
+  };
+
+  const handleCustomerSelect = (blockIdx, customer) => {
+    setCustomerBlocks(prev => prev.map((blk, i) => i === blockIdx
+      ? { ...blk, CustomerID: customer.id, customerName: customer.name }
+      : blk));
+    setCustomerSuggestions(prev => prev.map((arr, i) => (i === blockIdx ? [] : arr)));
+    setSearchTerms(prev => prev.map((term, i) => (i === blockIdx ? { ...term, customer: undefined } : term)));
+  };
+
+  const addProductRow = (blockIdx) => {
+    setCustomerBlocks(prev => prev.map((blk, i) => {
+      if (i !== blockIdx) return blk;
+      return {
+        ...blk,
+        productRows: [...blk.productRows, {
+          id: Date.now() + Math.random(),
+          category: "",
+          quantity: "",
+          weight: "",
+          StorageID: "",
+          storageName: ""
+        }]
+      };
+    }));
+  };
+
+  const removeProductRow = (blockIdx, prodIdx) => {
+    setCustomerBlocks(prev => prev.map((blk, i) => {
+      if (i !== blockIdx) return blk;
+      const newRows = blk.productRows.filter((_, j) => j !== prodIdx);
+      return {
+        ...blk,
+        productRows: newRows.length > 0 ? newRows : [
+          {
+            id: Date.now() + Math.random(),
+            category: "",
+            quantity: "",
+            weight: "",
+            StorageID: "",
+            storageName: ""
+          }
+        ]
+      };
+    }));
+  };
 
   return (
     <div className="container">
       <header className="header">
         <div className="header-left">
-          <h1 className="route-name">Delivery Optimizer</h1>
-          <p className="route-desc">Your daily route optimization solution</p>
+          <h1 className="route-name">Assign Truck</h1>
         </div>
         <div className="header-right">
-          <button className="btn new-route">+ New Route</button>
+          <button className="btn add-customer-btn" onClick={addCustomerBlock}>
+            + Add Customer
+          </button>
         </div>
       </header>
 
       <div className="content">
-        <aside className="sidebar" ref={suggestionRef}>
-
-          {/* --- Storage Live Search --- */}
-          <div className="storages-section">
-            <h3>Storage</h3>
-
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search storage…"
-              value={searchStorageTerm}
-              onChange={e => setSearchStorageTerm(e.target.value)}
-            />
-
-            <div className="selected-tags">
-              {selectedStorageId && (() => {
-                const s = storages.find(x => x.id === selectedStorageId);
-                return (
-                  <span className="tag" key={s.id}>
-                    {s.name}
-                    <button onClick={removeStorage}>×</button>
-                  </span>
-                );
-              })()}
-            </div>
-
-            {storageSuggestions.length > 0 && (
-              <ul className="suggestions-list">
-                {storageSuggestions.map(s => (
-                  <li key={s.id} onClick={() => {
-                    setSelectedStorageId(s.id);
-                    setSearchStorageTerm("");
-                  }}>
-                    {s.name} — {s.address}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* --- Customer Live Search --- */}
-          <div className="stops-section">
-            <h3>Stops</h3>
-
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Type to search customers…"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-
-            <div className="selected-tags">
-              {selectedCustomerIds.map(id => {
-                const c = customers.find(x => x.id === id);
-                return (
-                  <span className="tag" key={id}>
-                    {c.name}
-                    <button onClick={() => removeCustomer(id)}>×</button>
-                  </span>
-                );
-              })}
-            </div>
-
-            {customerSuggestions.length > 0 && (
-              <ul className="suggestions-list">
-                {customerSuggestions.map(c => (
-                  <li key={c.id} onClick={() => {
-                    toggleCustomer(c.id);
-                    setSearchTerm("");
-                  }}>
-                    {c.name} — {c.address}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </aside>
-
         <main className="main-area">
-          <div className="form-section">
-            <div className="input-group">
-              <label>Daily Customer Count:</label>
-              <input
-                type="number" min="0"
-                value={dailyCustomerCount}
-                onChange={e => setDailyCustomerCount(+e.target.value)}
-                className="number-input"
+          <ErrorBoundary>
+            {customerBlocks.map((block, idx) => (
+              <CustomerBlock
+                key={block.id}
+                block={block}
+                blockIdx={idx}
+                searchTerm={searchTerms[idx]?.customer}
+                suggestions={customerSuggestions[idx]}
+                customers={customers}
+                categories={categories}
+                storages={storages}
+                onCustomerSearch={(val) => handleCustomerSearch(idx, val)}
+                onCustomerSelect={(customer) => handleCustomerSelect(idx, customer)}
+                onRemoveBlock={() => removeCustomerBlock(idx)}
+                onAddProductRow={() => addProductRow(idx)}
+                onRemoveProductRow={(prodIdx) => removeProductRow(idx, prodIdx)}
+                onUpdateProductField={(prodIdx, field, value) =>
+                  updateProductField(idx, prodIdx, field, value)}
+                suggestionRef={(el) => (suggestionRefs.current[idx] = el)}
               />
-            </div>
-            <div className="input-group">
-              <label>Trucks Needed:</label>
-              <input
-                type="number" min="0"
-                value={numTrucks}
-                onChange={e => setNumTrucks(+e.target.value)}
-                className="number-input"
-              />
-            </div>
-            <div className="input-group">
-              <label>Product Weight (kg):</label>
-              <input
-                type="number" min="0"
-                value={productWeight}
-                onChange={e => setProductWeight(+e.target.value)}
-                className="number-input"
-              />
-            </div>
-            <button onClick={handleSubmit} className="btn optimize-btn">
-              Submit for Optimized Route
-            </button>
+            ))}
+          </ErrorBoundary>
+
+          <div className="submit-btn-row">
+            <button className="btn submit-btn" onClick={handleSubmit}>Submit</button>
           </div>
 
-          <div className="map-container">
-            <MapDisplay
-              routeData={routeData}
-              defaultCenter={defaultCenter}
-              zoom={13}
-            />
-          </div>
+          <AssignmentResult 
+            assignedVehicles={assignedVehicles}
+            // customerNameMap={customerNameMap}
+            // storageNameMap={storageNameMap} 
+          />
         </main>
       </div>
-
-      {optimizationResult && (
-        <div className="result-container">
-          <h2>Optimization Result</h2>
-          <pre className="result-output">
-            {JSON.stringify(optimizationResult, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 }

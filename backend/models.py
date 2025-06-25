@@ -1,18 +1,21 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from sqlalchemy import text
 
 db = SQLAlchemy()
 
 class Products(db.Model):
-    __tablename__ = 'Products'  # Must match the Azure table name exactly
+    __tablename__ = 'Products'
 
-    ProductID = db.Column(db.String(6), primary_key=True)
+    ProductID = db.Column(
+        db.String(6), primary_key=True,
+        server_default=text("'P' || LPAD(NEXTVAL('\"IDseq6Fig\"')::TEXT, 5, '0')")
+    )
     ProductName = db.Column(db.String(255), nullable=False)
     ProductDescription = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f"<Product {self.ProductName}>"
-    
+
     def to_dict(self):
         return {
             "ProductID": self.ProductID,
@@ -20,19 +23,39 @@ class Products(db.Model):
             "ProductDescription": self.ProductDescription,
         }
 
-class Storages(db.Model):
-    __tablename__ = 'Storages'  # Make sure this matches your Azure table
+class Catalogs(db.Model):
+    __tablename__ = 'Catalogs'
 
-    StorageID = db.Column(db.String(3), primary_key=True)
+    CatalogID = db.Column(
+        db.String(3), primary_key=True,
+        server_default=text("'C' || LPAD(NEXTVAL('\"IDseq3Fig\"')::TEXT, 2, '0')")
+    )
+    CatalogName = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return f"<Catalog {self.CatalogName}>"
+
+    def to_dict(self):
+        return {
+            "CatalogID": self.CatalogID,
+            "CatalogName": self.CatalogName,
+        }
+
+class Storages(db.Model):
+    __tablename__ = 'Storages'
+
+    StorageID = db.Column(
+        db.String(3), primary_key=True,
+        server_default=text("'S' || LPAD(NEXTVAL('\"IDseq3Fig\"')::TEXT, 2, '0')")
+    )
     StorageName = db.Column(db.String(255), nullable=False)
     StorageAddress = db.Column(db.String(255), nullable=False)
     StorageLat = db.Column(db.Float, nullable=False)
     StorageLong = db.Column(db.Float, nullable=False)
-    StoragePhone = db.Column(db.String(10), nullable=True)
 
     def __repr__(self):
         return f"<Storage {self.StorageName}>"
-    
+
     def to_dict(self):
         return {
             "StorageID": self.StorageID,
@@ -40,30 +63,42 @@ class Storages(db.Model):
             "StorageAddress": self.StorageAddress,
             "StorageLat": self.StorageLat,
             "StorageLong": self.StorageLong,
-            "StoragePhone": self.StoragePhone,
         }
+class Vehicles(db.Model):
+    __tablename__ = 'Vehicles'
 
-class Trucks(db.Model):
-    __tablename__ = 'Trucks'  # Ensure this matches the Azure table name
-
-    TruckID = db.Column(db.String(3), primary_key=True)
-    TruckLoad = db.Column(db.Integer, nullable=False)
-    TruckPhone = db.Column(db.String(10), nullable=True)
+    VehicleID = db.Column(
+        db.String(6), primary_key=True,
+        server_default=text("'V' || LPAD(NEXTVAL('\"IDseq6Fig\"')::TEXT, 5, '0')")
+    )
+    VehicleType = db.Column(db.String(255), nullable=False)
+    VehicleCapacity = db.Column(db.Float, nullable=True)
+    VehicleCurrentLoad = db.Column(db.Float, nullable=True)
+    VehicleLat = db.Column(db.Float, nullable=False)
+    VehicleLong = db.Column(db.Float, nullable=False)
+    VehicleContract = db.Column(db.Boolean, nullable=False)
 
     def __repr__(self):
-        return f"<Truck {self.TruckID}>"
-    
+        return f"<Vehicle {self.VehicleID}>"
+
     def to_dict(self):
         return {
-            "TruckID": self.TruckID,
-            "TruckLoad": self.TruckLoad,
-            "TruckPhone": self.TruckPhone,
+            "VehicleID": self.VehicleID,
+            "VehicleType": self.VehicleType,
+            "VehicleCapacity": self.VehicleCapacity,
+            "VehicleCurrentLoad": self.VehicleCurrentLoad,
+            "VehicleLat": self.VehicleLat,
+            "VehicleLong": self.VehicleLong,
+            "VehicleContract": self.VehicleContract,
         }
 
 class Customers(db.Model):
-    __tablename__ = 'Customers'  # Must match the Azure table name exactly
+    __tablename__ = 'Customers'
 
-    CustomerID = db.Column(db.String(6), primary_key=True)
+    CustomerID = db.Column(
+        db.String(6), primary_key=True,
+        server_default=text("'C' || LPAD(NEXTVAL('\"IDseq6Fig\"')::TEXT, 5, '0')")
+    )
     CustomerName = db.Column(db.String(255), nullable=False)
     CustomerAddress = db.Column(db.String(255), nullable=False)
     CustomerLong = db.Column(db.Float, nullable=False)
@@ -71,7 +106,7 @@ class Customers(db.Model):
 
     def __repr__(self):
         return f"<Customer {self.CustomerName}>"
-    
+
     def to_dict(self):
         return {
             "CustomerID": self.CustomerID,
@@ -79,4 +114,23 @@ class Customers(db.Model):
             "CustomerAddress": self.CustomerAddress,
             "CustomerLong": self.CustomerLong,
             "CustomerLat": self.CustomerLat,
+        }
+
+class VehicleCustomer(db.Model):
+    __tablename__ = 'VehicleCustomer'
+
+    VehicleID = db.Column(db.String(6), db.ForeignKey('Vehicles.VehicleID'), primary_key=True)
+    CustomerID = db.Column(db.String(6), db.ForeignKey('Customers.CustomerID'), primary_key=True)
+    StorageID = db.Column(db.String(3), db.ForeignKey('Storages.StorageID'), primary_key=True)
+    LoadWeight = db.Column(db.Float, nullable=False)
+
+    def __repr__(self):
+        return f"<VehicleCustomer {self.VehicleID} -> {self.CustomerID} (Storage: {self.StorageID})>"
+
+    def to_dict(self):
+        return {
+            "VehicleID": self.VehicleID,
+            "CustomerID": self.CustomerID,
+            "StorageID": self.StorageID,
+            "LoadWeight": self.LoadWeight,
         }

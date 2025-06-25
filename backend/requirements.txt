@@ -10,3 +10,5 @@ fastapi
 uvicorn[standard]
 pydantic
 azure-identity
+psycopg2-binary
+SQLAlchemy
