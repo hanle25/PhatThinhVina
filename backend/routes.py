@@ -39,7 +39,7 @@ def calculate_effective_space(order):
     num_factor = catalog.Num if catalog else 0
     weight = float(order["weight"])
     quantity = int(order.get("quantity", 1))
-    return weight * space_eq + quantity * num_factor
+    return quantity * weight * space_eq + quantity * num_factor
 
 def split_orders_by_capacity(orders, max_capacity):
     chunks = []
