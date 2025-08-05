@@ -1,0 +1,2 @@
+# Additional requirements for office hours automation
+psutil>=5.8.0 

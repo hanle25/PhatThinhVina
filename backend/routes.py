@@ -9,8 +9,11 @@ from sqlalchemy import func
 bp = Blueprint('api', __name__)
 
 TRUCK_SIZES = [1500, 2400, 3500, 4000, 5000, 6000, 7000, 8000]
-MAX_STOPS = 2
+MAX_CUSTOMER_STOPS = 2
+MAX_STORAGE_STOPS = 2
 MAX_DISTANCE = 25
+
+CONTRACT_CAPACITY = 2400
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371.0
@@ -30,9 +33,64 @@ def get_customer_name(customer_id):
     cust = Customers.query.get(customer_id)
     return str(cust.CustomerName) if cust else ""
 
+def calculate_effective_space(order):
+    catalog = Catalogs.query.filter_by(CatalogName=order["cataName"]).first()
+    space_eq = catalog.SpaceEquivalent if catalog else 1
+    num_factor = catalog.Num if catalog else 0
+    weight = float(order["weight"])
+    quantity = int(order.get("quantity", 1))
+    return weight * space_eq + quantity * num_factor
+
+def split_orders_by_capacity(orders, max_capacity):
+    chunks = []
+    current_chunk = []
+    current_load = 0.0
+
+    for order in sorted(orders, key=lambda o: calculate_effective_space(o), reverse=True):
+        eff_space = calculate_effective_space(order)
+        quantity = int(order.get("quantity", 1))
+
+        if quantity > 1 and eff_space > max_capacity:
+            catalog = Catalogs.query.filter_by(CatalogName=order["cataName"]).first()
+            space_eq = catalog.SpaceEquivalent if catalog else 1
+            num_factor = catalog.Num if catalog else 0
+            weight_per_unit = float(order["weight"]) / quantity
+            remaining_quantity = quantity
+
+            # calculate per unit effective space
+            unit_eff = weight_per_unit * space_eq + num_factor
+            if unit_eff > max_capacity:
+                raise ValueError(f"Single unit exceeds max capacity: {unit_eff} > {max_capacity}")
+
+            # find max units that fit in one truck
+            max_units_fit = int(max_capacity / unit_eff)
+
+            while remaining_quantity > 0:
+                fit_quantity = min(remaining_quantity, max_units_fit)
+                partial_order = order.copy()
+                partial_order["quantity"] = fit_quantity
+                partial_order["weight"] = weight_per_unit * fit_quantity
+                chunks.append([partial_order])
+                remaining_quantity -= fit_quantity
+
+        else:
+            if current_load + eff_space <= max_capacity:
+                current_chunk.append(order)
+                current_load += eff_space
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk)
+                current_chunk = [order]
+                current_load = eff_space
+
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    return chunks
+
 def assign_trucks(orders):
     try:
-        contract = Vehicles.query.filter_by(VehicleContract=True).order_by(Vehicles.VehicleID).all()
+        contract = Vehicles.query.filter_by(VehicleContract=True).order_by(Vehicles.VehicleID).limit(2).all()
         others = Vehicles.query.filter_by(VehicleContract=False).all()
         vehicles = contract + others
 
@@ -40,16 +98,17 @@ def assign_trucks(orders):
         for order in orders:
             customer_orders[order["CustomerID"]].append(order)
 
-        customer_weights = [
-            {
-                "CustomerID": cid,
-                "orders": cust_orders,
-                "total_weight": sum(float(o["weight"]) for o in cust_orders)
-            }
-            for cid, cust_orders in customer_orders.items()
-        ]
+        customer_spaces = []
+        for cid, cust_orders in customer_orders.items():
+            split_batches = split_orders_by_capacity(cust_orders, 8000)
+            for batch in split_batches:
+                customer_spaces.append({
+                    "CustomerID": cid,
+                    "orders": batch,
+                    "total_effective_space": sum(calculate_effective_space(o) for o in batch)
+                })
 
-        customer_weights.sort(key=lambda x: x["total_weight"], reverse=True)
+        customer_spaces.sort(key=lambda x: x["total_effective_space"], reverse=True)
 
         assigned_customers = set()
         vehicle_assignments = []
@@ -60,13 +119,13 @@ def assign_trucks(orders):
                 return contract[len(contract_vehicles_used)]
             else:
                 veh = Vehicles(
-                    VehicleID = generate_unique_vehicle_id(),
-                    VehicleType = "", 
-                    VehicleCapacity = 0.0,
-                    VehicleCurrentLoad = 0.0,
-                    VehicleLat = 10.766590089230672,
-                    VehicleLong = 106.60678703538484,
-                    VehicleContract = False
+                    VehicleID=generate_unique_vehicle_id(),
+                    VehicleType="",
+                    VehicleCapacity=0.0,
+                    VehicleCurrentLoad=0.0,
+                    VehicleLat=10.766590089230672,
+                    VehicleLong=106.60678703538484,
+                    VehicleContract=False
                 )
                 db.session.add(veh)
                 db.session.flush()
@@ -74,28 +133,31 @@ def assign_trucks(orders):
 
         def assign_group(group):
             group_orders = [o for cust in group for o in cust["orders"]]
-            storage_ids = list({order["StorageID"] for order in group_orders})
+            storage_ids = list({order["StorageID"] for order in group_orders})[:MAX_STORAGE_STOPS]
 
-            total_weight = sum(float(o["weight"]) for o in group_orders)
-            if total_weight < 80:
+            total_effective_space = sum(calculate_effective_space(o) for o in group_orders)
+            is_contract = len(contract_vehicles_used) < len(contract) and total_effective_space <= CONTRACT_CAPACITY
+
+            if is_contract:
+                vtype, vcap = "truck", CONTRACT_CAPACITY
+            elif total_effective_space < 80:
                 vtype, vcap = "two-wheeler", 80
-            elif total_weight <= 800:
+            elif total_effective_space <= 800:
                 vtype, vcap = "van", 800
             else:
-                vtype, vcap = "truck", next((s for s in TRUCK_SIZES if total_weight <= s), TRUCK_SIZES[-1])
+                vtype, vcap = "truck", next((s for s in TRUCK_SIZES if total_effective_space <= s), TRUCK_SIZES[-1])
 
-            is_contract = len(contract_vehicles_used) < len(contract)
             veh = allocate_vehicle(is_contract)
             veh.VehicleType = vtype
             veh.VehicleCapacity = vcap
-            veh.VehicleCurrentLoad = total_weight
+            veh.VehicleCurrentLoad = total_effective_space
 
             if is_contract:
                 contract_vehicles_used.append(veh)
 
             grouped = defaultdict(float)
             for o in group_orders:
-                grouped[(o["CustomerID"], o["StorageID"])] += float(o["weight"])
+                grouped[(o["CustomerID"], o["StorageID"])] += calculate_effective_space(o)
             for (cid, sid), weight in grouped.items():
                 existing = VehicleCustomer.query.filter_by(
                     VehicleID=veh.VehicleID,
@@ -116,7 +178,7 @@ def assign_trucks(orders):
                 {
                     "CustomerID": c["CustomerID"],
                     "customerName": get_customer_name(c["CustomerID"]),
-                    "loadWeight": c["total_weight"]
+                    "loadWeight": c["total_effective_space"]
                 }
                 for c in group
             ]
@@ -139,38 +201,42 @@ def assign_trucks(orders):
                 "truckId": str(veh.VehicleID),
                 "type": vtype,
                 "capacity": vcap,
-                "currentLoad": total_weight,
+                "currentLoad": total_effective_space,
                 "assignedCustomers": assigned_list,
                 "route": route,
-                "storages": [
-                    {"id": s.StorageID, "name": s.StorageName}
-                    for s in Storages.query.filter(Storages.StorageID.in_(storage_ids)).all()
-                ],
-                "customers": [
-                    {"id": c["CustomerID"], "name": get_customer_name(c["CustomerID"])}
-                    for c in group
-            ]
+                "storages": storage_data,
+                "customers": customer_data
             })
 
-        unassigned = [c for c in customer_weights if c["CustomerID"] not in assigned_customers]
+        unassigned = customer_spaces.copy()
         while unassigned:
             main_cust = unassigned[0]
             group = [main_cust]
-            assigned_customers.add(main_cust["CustomerID"])
+            unassigned = unassigned[1:]
             main_lat, main_lng = get_customer_location(main_cust["CustomerID"])
 
-            for other in unassigned[1:]:
-                if len(group) >= MAX_STOPS:
-                    break
+            new_unassigned = []
+            for other in unassigned:
+                if len(group) >= MAX_CUSTOMER_STOPS:
+                    new_unassigned.append(other)
+                    continue
                 other_lat, other_lng = get_customer_location(other["CustomerID"])
                 if main_lat is None or other_lat is None:
+                    new_unassigned.append(other)
                     continue
                 if haversine(main_lat, main_lng, other_lat, other_lng) <= MAX_DISTANCE:
                     group.append(other)
-                    assigned_customers.add(other["CustomerID"])
+                else:
+                    new_unassigned.append(other)
 
-            assign_group(group)
-            unassigned = [c for c in customer_weights if c["CustomerID"] not in assigned_customers]
+            group_total_space = sum(c["total_effective_space"] for c in group)
+            if group_total_space > 8000:
+                for single_cust in group:
+                    assign_group([single_cust])
+            else:
+                assign_group(group)
+                
+            unassigned = new_unassigned
 
         db.session.commit()
         return vehicle_assignments
@@ -191,15 +257,6 @@ def get_storages():
 @bp.route("/catalogs", methods=["GET"])
 def get_catalogs():
     return jsonify({"catalogs": [c.to_dict() for c in Catalogs.query.all()]}), 200
-
-# @bp.route('/name-maps')
-# def get_name_mappings():
-#     customer_map = {c.CustomerID: c.CustomerName for c in Customers.query.all()}
-#     storage_map = {s.StorageID: s.StorageName for s in Storages.query.all()}
-#     return jsonify({
-#         "customerNameMap": customer_map,
-#         "storageNameMap": storage_map
-#     })
 
 @bp.route("/assign_trucks", methods=["POST", "OPTIONS"])
 def assign_trucks_endpoint():

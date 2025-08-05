@@ -1,0 +1,13 @@
+[Unit]
+Description=Office Hours Server Timer
+Requires=office-server.service
+
+[Timer]
+# Start at 8:00 AM on weekdays
+OnCalendar=Mon..Fri 08:00:00
+# Stop at 6:00 PM on weekdays
+OnCalendar=Mon..Fri 18:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target 

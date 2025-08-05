@@ -13,7 +13,7 @@ const API_ASSIGN_TRUCKS = process.env.REACT_APP_API_ASSIGN_TRUCKS;
 function App() {
   const [customers, setCustomers] = useState([]);
   const [storages, setStorages] = useState([]);
-  const [categories, setCatalogs] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [searchTerms, setSearchTerms] = useState([]);
   const [customerSuggestions, setCustomerSuggestions] = useState([]);
   const [customerBlocks, setCustomerBlocks] = useState([]);
@@ -48,7 +48,7 @@ function App() {
     fetch(API_FETCH_CATALOGS)
       .then(res => res.json())
       .then(data => {
-        setCatalogs(data.catalogs.map(c => ({
+        setCategories(data.catalogs.map(c => ({
           id: c.CatalogID,
           name: c.CatalogName
         })));
@@ -132,11 +132,12 @@ function App() {
         if (!pr.category || !pr.weight || isNaN(parseFloat(pr.weight)) || !pr.StorageID) {
           return alert("Invalid product details detected.");
         }
-        const productName = categories.find(c => c.id === pr.category)?.name || "";
+        const cataName = categories.find(c => c.id === pr.category)?.name || "";
         orders.push({
           CustomerID: blk.CustomerID,
-          productName,
+          cataName,
           weight: parseFloat(pr.weight),
+          quantity: parseFloat(pr.quantity) || 1,
           StorageID: pr.StorageID,
           offRoute: false
         });

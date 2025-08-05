@@ -1,0 +1,20 @@
+[Unit]
+Description=Office Hours Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/path/to/your/project
+ExecStart=/usr/bin/python3 /path/to/your/project/start_server.py
+ExecStop=/usr/bin/python3 /path/to/your/project/stop_server.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Office hours schedule (8 AM to 6 PM, Monday-Friday)
+# This will be handled by a separate timer
+
+[Install]
+WantedBy=multi-user.target 

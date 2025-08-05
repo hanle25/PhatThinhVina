@@ -1,0 +1,119 @@
+================================================================================
+                    WINDOWS OFFICE HOURS SERVER - QUICK REFERENCE
+================================================================================
+
+📅 OFFICE HOURS: Monday-Friday, 9:00 AM - 7:00 PM
+🌐 ACCESS: http://[COMPANY_IP]:3000 (Frontend) | http://[COMPANY_IP]:5000 (Backend)
+
+================================================================================
+🚀 INITIAL SETUP (Run as Administrator)
+================================================================================
+
+1. Copy project to company machine
+2. Open Command Prompt as Administrator
+3. Navigate to project directory
+4. Run: setup_windows_automation.bat
+
+================================================================================
+🔧 DAILY COMMANDS
+================================================================================
+
+control_server.bat start    - Start server manually
+control_server.bat stop     - Stop server manually
+control_server.bat restart  - Restart server
+control_server.bat status   - Check if servers are running
+control_server.bat logs     - View recent server logs
+control_server.bat schedule - Show office hours schedule
+
+================================================================================
+📊 MONITORING
+================================================================================
+
+# Check server status
+control_server.bat status
+
+# View logs
+control_server.bat logs
+
+# Check Task Scheduler
+schtasks /query /tn "Office Server Startup"
+schtasks /query /tn "Office Server Shutdown"
+
+# Find company machine IP
+ipconfig | findstr "IPv4"
+
+================================================================================
+🛠️ TROUBLESHOOTING
+================================================================================
+
+# Check if ports are in use
+netstat -ano | findstr ":3000"
+netstat -ano | findstr ":5000"
+
+# Run tasks manually
+schtasks /run /tn "Office Server Startup"
+schtasks /run /tn "Office Server Shutdown"
+
+# Check Task Scheduler service
+sc query Schedule
+
+# Install dependencies
+cd backend && pip install -r requirements.txt
+cd frontend && npm install
+
+================================================================================
+🔒 FIREWALL CONFIGURATION
+================================================================================
+
+# Allow incoming connections (run as Administrator)
+netsh advfirewall firewall add rule name="Office Server Frontend" dir=in action=allow protocol=TCP localport=3000
+netsh advfirewall firewall add rule name="Office Server Backend" dir=in action=allow protocol=TCP localport=5000
+
+# Allow only from office network (replace with your network)
+netsh advfirewall firewall add rule name="Office Server Frontend" dir=in action=allow protocol=TCP localport=3000 remoteip=192.168.1.0/24
+netsh advfirewall firewall add rule name="Office Server Backend" dir=in action=allow protocol=TCP localport=5000 remoteip=192.168.1.0/24
+
+================================================================================
+⚙️ CUSTOMIZATION
+================================================================================
+
+# Change office hours (run as Administrator)
+schtasks /change /tn "Office Server Startup" /st 08:30    # Change to 8:30 AM
+schtasks /change /tn "Office Server Shutdown" /st 18:30   # Change to 6:30 PM
+
+# Using Task Scheduler GUI
+1. Open "Task Scheduler" (taskschd.msc)
+2. Find "Office Server Startup" and "Office Server Shutdown"
+3. Right-click → Properties → Triggers
+4. Edit the time settings
+
+================================================================================
+🗑️ UNINSTALLATION
+================================================================================
+
+# Remove automation (run as Administrator)
+schtasks /delete /tn "Office Server Startup" /f
+schtasks /delete /tn "Office Server Shutdown" /f
+
+# Stop servers
+control_server.bat stop
+
+# Remove firewall rules
+netsh advfirewall firewall delete rule name="Office Server Frontend"
+netsh advfirewall firewall delete rule name="Office Server Backend"
+
+================================================================================
+📞 SUPPORT
+================================================================================
+
+Log files location: %TEMP%\office_server.log
+Log files location: %TEMP%\office_server_shutdown.log
+
+If server won't start:
+1. Check logs: control_server.bat logs
+2. Check status: control_server.bat status
+3. Verify dependencies are installed
+4. Check if ports are available
+5. Ensure Administrator privileges
+
+================================================================================ 

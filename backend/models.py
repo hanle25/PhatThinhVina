@@ -31,6 +31,8 @@ class Catalogs(db.Model):
         server_default=text("'C' || LPAD(NEXTVAL('\"IDseq3Fig\"')::TEXT, 2, '0')")
     )
     CatalogName = db.Column(db.String(255), nullable=False)
+    SpaceEquivalent = db.Column(db.Float, nullable=False)
+    Num = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
         return f"<Catalog {self.CatalogName}>"
@@ -39,6 +41,8 @@ class Catalogs(db.Model):
         return {
             "CatalogID": self.CatalogID,
             "CatalogName": self.CatalogName,
+            "SpaceEquivalent": self.SpaceEquivalent,
+            "Num": self.Num,
         }
 
 class Storages(db.Model):
