@@ -1,0 +1,92 @@
+================================================================================
+                    WINDOWS DEPLOYMENT CHECKLIST
+================================================================================
+
+📅 OFFICE HOURS: Monday-Friday, 9:00 AM - 7:00 PM
+🌐 ACCESS: http://[COMPANY_IP]:3000 (Frontend) | http://[COMPANY_IP]:5000 (Backend)
+
+================================================================================
+✅ PRE-DEPLOYMENT CHECKLIST
+================================================================================
+
+□ Copy these files to Windows machine:
+  □ start_server.py
+  □ stop_server.py
+  □ setup_windows_automation.bat
+  □ office_server_startup.bat
+  □ office_server_shutdown.bat
+  □ WINDOWS_DEPLOYMENT_GUIDE.md
+  □ WINDOWS_QUICK_REFERENCE.txt
+  □ backend/ folder
+  □ frontend/ folder
+
+□ Install on Windows machine:
+  □ Python 3.7+
+  □ Node.js and npm
+
+================================================================================
+🚀 DEPLOYMENT STEPS
+================================================================================
+
+□ Step 1: Open Command Prompt as Administrator
+□ Step 2: Navigate to project directory
+□ Step 3: Run: setup_windows_automation.bat
+□ Step 4: Test: control_server.bat start
+□ Step 5: Check: control_server.bat status
+□ Step 6: Verify: control_server.bat schedule
+
+================================================================================
+🔧 TESTING COMMANDS
+================================================================================
+
+□ Test startup: control_server.bat start
+□ Check status: control_server.bat status
+□ View logs: control_server.bat logs
+□ Show schedule: control_server.bat schedule
+□ Test stop: control_server.bat stop
+
+================================================================================
+🌐 ACCESS VERIFICATION
+================================================================================
+
+□ Find company machine IP: ipconfig | findstr "IPv4"
+□ Test frontend: http://[COMPANY_IP]:3000
+□ Test backend: http://[COMPANY_IP]:5000
+□ Test from other office computers
+
+================================================================================
+🛠️ TROUBLESHOOTING
+================================================================================
+
+If control_server.bat start fails:
+□ Check Python: python --version
+□ Check Node.js: node --version
+□ Install dependencies: cd backend && pip install -r requirements.txt
+□ Install frontend: cd frontend && npm install
+□ Check ports: netstat -ano | findstr ":3000"
+□ Run as Administrator
+
+If automation doesn't work:
+□ Check Task Scheduler: schtasks /query /tn "Office Server*"
+□ Run manually: schtasks /run /tn "Office Server Startup"
+
+================================================================================
+📞 SUPPORT FILES
+================================================================================
+
+□ Log files: %TEMP%\office_server.log
+□ Log files: %TEMP%\office_server_shutdown.log
+□ Documentation: WINDOWS_DEPLOYMENT_GUIDE.md
+□ Quick reference: WINDOWS_QUICK_REFERENCE.txt
+
+================================================================================
+🎉 SUCCESS INDICATORS
+================================================================================
+
+□ Server starts automatically at 9:00 AM on weekdays
+□ Server stops automatically at 7:00 PM on weekdays
+□ Server is accessible from office network
+□ Manual controls work (start/stop/restart)
+□ Logs show successful startup/shutdown
+
+================================================================================ 
