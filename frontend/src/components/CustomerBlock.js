@@ -19,8 +19,8 @@ export default function CustomerBlock({
 }) {
   return (
     <div className="customer-block">
-      <div className="customer-header">
-        <div className="customer-cell" ref={suggestionRef}>
+      <div className="customer-row-header">
+        <div className="customer-search-cell" ref={suggestionRef}>
           <div className="suggestion-wrapper">
             <input
               className="input customer-input"
@@ -38,27 +38,28 @@ export default function CustomerBlock({
               </ul>
             )}
           </div>
+          <button className="btn remove-customer-btn" onClick={onRemoveBlock}>×</button>
         </div>
 
-        <div className="remove-customer-cell">
-          <button className="btn remove-customer-btn" onClick={onRemoveBlock}></button>
+        <div className="customer-header-actions">
+          <button className="btn add-product-btn" onClick={onAddProductRow}>
+            + Add Product
+          </button>
         </div>
       </div>
 
-      {block.productRows.map((pr, prodIdx) => (
-        <ProductRow
-          key={pr.id}
-          pr={pr}
-          categories={categories}
-          storages={storages}
-          onChange={(field, value) => onUpdateProductField(prodIdx, field, value)}
-          onRemove={() => onRemoveProductRow(prodIdx)}
-        />
-      ))}
-
-      <button className="btn add-product-btn" onClick={onAddProductRow}>
-        + Add Product
-      </button>
+      <div className="product-rows">
+        {block.productRows.map((pr, prodIdx) => (
+          <ProductRow
+            key={pr.id}
+            pr={pr}
+            categories={categories}
+            storages={storages}
+            onChange={(field, value) => onUpdateProductField(prodIdx, field, value)}
+            onRemove={() => onRemoveProductRow(prodIdx)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

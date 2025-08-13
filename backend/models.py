@@ -49,8 +49,8 @@ class Storages(db.Model):
     __tablename__ = 'Storages'
 
     StorageID = db.Column(
-        db.String(3), primary_key=True,
-        server_default=text("'S' || LPAD(NEXTVAL('\"IDseq3Fig\"')::TEXT, 2, '0')")
+        db.String(6), primary_key=True,
+        server_default=text("'S' || LPAD(NEXTVAL('\"IDseq6Fig\"')::TEXT, 5, '0')")
     )
     StorageName = db.Column(db.String(255), nullable=False)
     StorageAddress = db.Column(db.String(255), nullable=False)
@@ -125,11 +125,11 @@ class VehicleCustomer(db.Model):
 
     VehicleID = db.Column(db.String(6), db.ForeignKey('Vehicles.VehicleID'), primary_key=True)
     CustomerID = db.Column(db.String(6), db.ForeignKey('Customers.CustomerID'), primary_key=True)
-    StorageID = db.Column(db.String(3), db.ForeignKey('Storages.StorageID'), primary_key=True)
+    StorageID = db.Column(db.String(6), db.ForeignKey('Storages.StorageID'), primary_key=True)
     LoadWeight = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
-        return f"<VehicleCustomer {self.VehicleID} -> {self.CustomerID} (Storage: {self.StorageID})>"
+        return f"<VehicleCustomer {self.VehicleID}-{self.CustomerID}-{self.StorageID}>"
 
     def to_dict(self):
         return {

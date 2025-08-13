@@ -33,23 +33,43 @@
 
 /* Customer Block */
 .customer-block {
-  position: relative;
-  border: 1px solid #ccc;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+  border: 1px solid #e0e0e0;
   border-radius: 4px;
-  background-color: #fafafa;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: white;
 }
 
-.customer-header {
+.customer-row-header {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  gap: 1rem;
 }
 
-.customer-cell {
-  flex-grow: 1;
+.customer-search-cell {
+  flex: 1;
+  max-width: 600px;
   position: relative; /* for suggestions dropdown */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.customer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.transfer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  width: 100%;
 }
 
 .remove-customer-cell {
@@ -57,16 +77,24 @@
 }
 
 .remove-customer-btn {
-  position: absolute;
-  top: 8px;          /* adjust as desired */
-  right: 8px;        /* adjust as desired */
-  width: 16px;       /* small diameter */
+  width: 16px;
   height: 16px;
   padding: 0;
   border-radius: 50%;
   background-color: #f44336;
   border: none;
   cursor: pointer;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.remove-customer-btn:hover {
+  background-color: #d32f2f;
 }
 
 .remove-btn:hover {
@@ -90,11 +118,291 @@
 }
 
 .customer-input{
+  width: 100% !important;            
+  padding: 0.4rem;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  box-sizing: border-box;
+  min-width: 400px;
+}
+
+/* Multi-Select Storage Dropdown */
+.multi-select-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.multi-select-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.multi-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.storage-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.storage-option:hover {
+  background-color: #f5f5f5;
+}
+
+.storage-checkbox {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.storage-name {
+  flex: 1;
+  font-size: 14px;
+}
+
+/* Assign Truck Section */
+.assign-truck-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.customer-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Storage Transfer Section */
+.storage-transfer-section {
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.section-header {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  margin-left: 1rem;
+}
+
+.section-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.section-description {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.add-storage-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.add-storage-btn:hover {
+  background-color: #388e3c;
+}
+
+.transfer-block {
+  /* Removed - no longer needed */
+}
+
+.transfer-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.transfer-row {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: white;
+}
+
+.transfer-row-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.destination-storage-cell {
+  flex: 1;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.destination-label {
+  font-weight: bold;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.destination-storage-input {
+  width: 100% !important;
+  min-width: 400px;
+}
+
+.destination-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.product-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.no-transfers-message {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.transfer-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.transfer-cell-old {
+  flex-grow: 1;
+  position: relative;
+}
+
+.storage-search-wrapper {
+  display: inline-block;  
+  position: relative;       
+}
+
+.storage-input {
   width: 50%;            
   padding: 0.4rem;
   border: 1px solid #bbb;
   border-radius: 3px;
   box-sizing: border-box;
+}
+
+.remove-transfer-cell {
+  margin-left: 1.5rem;
+}
+
+.remove-transfer-btn {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: #f44336;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.remove-transfer-btn:hover {
+  background-color: #d32f2f;
+}
+
+.remove-transfer-btn:hover {
+  background-color: #d32f2f;
+}
+
+.add-product-row {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.add-product-btn {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.add-product-btn:hover {
+  background-color: #1976d2;
+}
+
+.add-transfer-block-row {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.add-transfer-block-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.add-transfer-block-btn:hover {
+  background-color: #388e3c;
 }
 
 .suggestions-list {
@@ -176,6 +484,13 @@
   background-color: #f44336;
   border: none;
   cursor: pointer;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
 }
 
 .remove-product-cell .remove-product-btn:hover {

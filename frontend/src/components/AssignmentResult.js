@@ -49,6 +49,15 @@ export default function AssignmentResult({ assignedVehicles }) {
 
                 if (type === "customer") {
                     const name = veh.customers?.find(c => c.id === idOrLat)?.name;
+                    // Check if this is a storage transfer destination
+                    const isStorageTransfer = veh.storages?.find(s => s.id === idOrLat);
+                    if (isStorageTransfer) {
+                      return (
+                        <li key={si}>
+                          📦 Deliver to Storage {isStorageTransfer.name} ({latOrLng.toFixed(4)}, {lng.toFixed(4)})
+                        </li>
+                      );
+                    }
                   return (
                     <li key={si}>
                       📦 Deliver to Customer {name} ({latOrLng.toFixed(4)}, {lng.toFixed(4)})

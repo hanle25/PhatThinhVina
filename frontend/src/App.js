@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import CustomerBlock from "./components/CustomerBlock";
+import StorageTransfer from "./components/StorageTransfer";
 import AssignmentResult from "./components/AssignmentResult";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -17,6 +18,7 @@ function App() {
   const [searchTerms, setSearchTerms] = useState([]);
   const [customerSuggestions, setCustomerSuggestions] = useState([]);
   const [customerBlocks, setCustomerBlocks] = useState([]);
+  const [storageTransfers, setStorageTransfers] = useState([]);
   const [assignedVehicles, setAssignedVehicles] = useState([]);
   // const [customerNameMap, setCustomerNameMap] = useState({});
   // const [storageNameMap, setStorageNameMap] = useState({});
@@ -144,6 +146,22 @@ function App() {
       }
     }
 
+    // Add storage transfers to orders (optional)
+    for (const transfer of storageTransfers) {
+      if (transfer.destinationStorage && transfer.category && transfer.weight && transfer.StorageID) {
+        const cataName = categories.find(c => c.id === transfer.category)?.name || "";
+        orders.push({
+          CustomerID: "TRANSFER", // Special identifier for transfers
+          cataName,
+          weight: parseFloat(transfer.weight),
+          quantity: parseFloat(transfer.quantity) || 1,
+          StorageID: transfer.StorageID, // Source storage (where product currently is)
+          toStorage: transfer.destinationStorage, // Destination storage
+          offRoute: false
+        });
+      }
+    }
+
     try {
       const response = await fetch(API_ASSIGN_TRUCKS, {
         method: "POST",
@@ -220,42 +238,81 @@ function App() {
     }));
   };
 
+  // Storage Transfer Management
+  const addStorageTransfer = () => {
+    const newTransfer = {
+      id: Date.now() + Math.random(),
+      destinationStorage: "",
+      category: "",
+      quantity: "",
+      weight: "",
+      StorageID: "",
+      storageName: ""
+    };
+    setStorageTransfers(prev => [...prev, newTransfer]);
+  };
+
+  const removeStorageTransfer = (transferIdx) => {
+    setStorageTransfers(prev => prev.filter((_, i) => i !== transferIdx));
+  };
+
+  const updateStorageTransfer = (transferIdx, field, value) => {
+    setStorageTransfers(prev => prev.map((transfer, i) =>
+      i === transferIdx ? { ...transfer, [field]: value } : transfer
+    ));
+  };
+
   return (
     <div className="container">
-      <header className="header">
-        <div className="header-left">
-          <h1 className="route-name">Assign Truck</h1>
-        </div>
-        <div className="header-right">
-          <button className="btn add-customer-btn" onClick={addCustomerBlock}>
-            + Add Customer
-          </button>
-        </div>
-      </header>
 
       <div className="content">
         <main className="main-area">
+          {/* Assign Truck Section Container */}
+          <div className="assign-truck-section">
+            <div className="section-header">
+              <div className="header-left">
+                <h3>Assign Truck</h3>
+              </div>
+              <div className="header-right">
+                <button className="btn add-customer-btn" onClick={addCustomerBlock}>
+                  + Add Customer
+                </button>
+              </div>
+            </div>
+
+            <div className="customer-blocks">
+              {customerBlocks.map((block, idx) => (
+                <CustomerBlock
+                  key={block.id}
+                  block={block}
+                  blockIdx={idx}
+                  searchTerm={searchTerms[idx]?.customer}
+                  suggestions={customerSuggestions[idx]}
+                  customers={customers}
+                  categories={categories}
+                  storages={storages}
+                  onCustomerSearch={(val) => handleCustomerSearch(idx, val)}
+                  onCustomerSelect={(customer) => handleCustomerSelect(idx, customer)}
+                  onRemoveBlock={() => removeCustomerBlock(idx)}
+                  onAddProductRow={() => addProductRow(idx)}
+                  onRemoveProductRow={(prodIdx) => removeProductRow(idx, prodIdx)}
+                  onUpdateProductField={(prodIdx, field, value) =>
+                    updateProductField(idx, prodIdx, field, value)}
+                  suggestionRef={(el) => (suggestionRefs.current[idx] = el)}
+                />
+              ))}
+            </div>
+          </div>
+
           <ErrorBoundary>
-            {customerBlocks.map((block, idx) => (
-              <CustomerBlock
-                key={block.id}
-                block={block}
-                blockIdx={idx}
-                searchTerm={searchTerms[idx]?.customer}
-                suggestions={customerSuggestions[idx]}
-                customers={customers}
-                categories={categories}
-                storages={storages}
-                onCustomerSearch={(val) => handleCustomerSearch(idx, val)}
-                onCustomerSelect={(customer) => handleCustomerSelect(idx, customer)}
-                onRemoveBlock={() => removeCustomerBlock(idx)}
-                onAddProductRow={() => addProductRow(idx)}
-                onRemoveProductRow={(prodIdx) => removeProductRow(idx, prodIdx)}
-                onUpdateProductField={(prodIdx, field, value) =>
-                  updateProductField(idx, prodIdx, field, value)}
-                suggestionRef={(el) => (suggestionRefs.current[idx] = el)}
-              />
-            ))}
+            <StorageTransfer
+              transfers={storageTransfers}
+              categories={categories}
+              storages={storages}
+              onAddTransfer={addStorageTransfer}
+              onRemoveTransfer={removeStorageTransfer}
+              onUpdateTransfer={updateStorageTransfer}
+            />
           </ErrorBoundary>
 
           <div className="submit-btn-row">
@@ -264,8 +321,6 @@ function App() {
 
           <AssignmentResult 
             assignedVehicles={assignedVehicles}
-            // customerNameMap={customerNameMap}
-            // storageNameMap={storageNameMap} 
           />
         </main>
       </div>
