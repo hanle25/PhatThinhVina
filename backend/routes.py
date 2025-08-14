@@ -442,6 +442,18 @@ def assign_trucks(orders):
                                 assign_group([temp_group_member])
                             continue  # Skip the rest of this batch since we've split it
                         else:
+                            # Enforce: 15-ton truck must stop at only ONE customer
+                            unique_customers = [
+                                cid for cid in {o.get("CustomerID") for o in batch_orders if o.get("CustomerID") != "TRANSFER"}
+                                if cid
+                            ]
+                            if len(unique_customers) > 1:
+                                print("DEBUG: 15-ton requires single customer; splitting by customer")
+                                for cid in unique_customers:
+                                    sub = [o for o in batch_orders if o.get("CustomerID") == cid]
+                                    if sub:
+                                        assign_group([{"CustomerID": cid, "orders": sub}])
+                                continue
                             fifteen_ton_truck_used = True
 
                     vtype, vcap = "truck", suitable_truck or MAX_TRUCK_CAPACITY
