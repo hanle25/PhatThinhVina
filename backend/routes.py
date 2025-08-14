@@ -824,7 +824,7 @@ def get_catalogs():
 def assign_trucks_endpoint():
     if request.method == "OPTIONS":
         response = make_response('', 200)
-        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000" #http://192.168.1.18:3000
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type"
         return response
