@@ -14,7 +14,6 @@ export default function StorageTransfer({
       <div className="section-header">
         <div className="header-left">
           <h3>Storage Transfers</h3>
-          <p className="section-description">Move products between storage facilities. Select source storage (where product currently is) and destination storage (where to move it to).</p>
         </div>
         <div className="header-right">
           <button className="btn add-storage-btn" onClick={onAddTransfer}>
@@ -35,7 +34,7 @@ export default function StorageTransfer({
                     value={transfer.destinationStorage}
                     onChange={(e) => onUpdateTransfer(index, "destinationStorage", e.target.value)}
                   >
-                    <option value="">Select Destination Storage (Where to move TO)</option>
+                    <option value="">Select Destination Storage</option>
                     {storages.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}

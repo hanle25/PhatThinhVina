@@ -6,28 +6,24 @@
   font-family: Arial, sans-serif;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.header-left .route-name {
-  font-size: 1.5rem;
-  color: #333;
-}
-
-.header-right .add-customer-btn {
+.add-customer-btn,
+.add-storage-btn {
   background-color: #4caf50;
   color: #fff;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 3px;
   cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px; /* ensure both have identical width */
 }
 
-.header-right .add-customer-btn:hover {
+.add-customer-btn:hover,
+.add-storage-btn:hover {
   background-color: #388e3c;
 }
 
@@ -95,26 +91,6 @@
 
 .remove-customer-btn:hover {
   background-color: #d32f2f;
-}
-
-.remove-btn:hover {
-  background-color: #d32f2f;
-}
-
-.remove-btn {
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border-radius: 50%;
-  background-color: #f44336;
-  border: none;
-  cursor: pointer;
-}
-
-/* Suggestion Dropdown */
-.customer-search-wrapper {
-  display: inline-block;  
-  position: relative;       
 }
 
 .customer-input{
@@ -185,8 +161,10 @@
 }
 
 /* Assign Truck Section */
-.assign-truck-section {
-  margin-bottom: 2rem;
+/* Make Assign Truck and Storage Transfers boxes visually identical */
+.assign-truck-section,
+.storage-transfer-section {
+  margin: 2rem 0;
   padding: 1rem;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
@@ -200,19 +178,13 @@
 }
 
 /* Storage Transfer Section */
-.storage-transfer-section {
-  margin-top: 2rem;
-  padding: 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-}
+/* unified above */
 
 .section-header {
   margin-bottom: 1rem;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .header-left {
@@ -229,31 +201,7 @@
   font-size: 1.2rem;
 }
 
-.section-description {
-  margin: 0;
-  color: #666;
-  font-size: 0.9rem;
-  font-style: italic;
-}
-
-.add-storage-btn {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.add-storage-btn:hover {
-  background-color: #388e3c;
-}
-
-.transfer-block {
-  /* Removed - no longer needed */
-}
+/* removed duplicate .add-storage-btn rules (now unified above) */
 
 .transfer-rows {
   display: flex;
@@ -283,11 +231,7 @@
   gap: 0.5rem;
 }
 
-.destination-label {
-  font-weight: bold;
-  color: #333;
-  font-size: 0.9rem;
-}
+/* .destination-label unused */
 
 .destination-storage-input {
   width: 100% !important;
@@ -313,21 +257,7 @@
   font-style: italic;
 }
 
-.transfer-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.transfer-cell-old {
-  flex-grow: 1;
-  position: relative;
-}
-
-.storage-search-wrapper {
-  display: inline-block;  
-  position: relative;       
-}
+/* legacy transfer header/search wrappers unused */
 
 .storage-input {
   width: 50%;            
@@ -337,9 +267,7 @@
   box-sizing: border-box;
 }
 
-.remove-transfer-cell {
-  margin-left: 1.5rem;
-}
+/* .remove-transfer-cell unused */
 
 .remove-transfer-btn {
   width: 16px;
@@ -360,49 +288,6 @@
 
 .remove-transfer-btn:hover {
   background-color: #d32f2f;
-}
-
-.remove-transfer-btn:hover {
-  background-color: #d32f2f;
-}
-
-.add-product-row {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.add-product-btn {
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.add-product-btn:hover {
-  background-color: #1976d2;
-}
-
-.add-transfer-block-row {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.add-transfer-block-btn {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.add-transfer-block-btn:hover {
-  background-color: #388e3c;
 }
 
 .suggestions-list {
@@ -525,8 +410,8 @@
   border-radius: 4px;
   padding: 1rem;
   background-color: #fafafa;
-  max-height: 400px;       /* adjust as needed */
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .results-box h2 {

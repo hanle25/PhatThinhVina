@@ -49,7 +49,7 @@ export default function ProductRow({
   };
 
   const getDisplayText = () => {
-    if (selectedStorages.length === 0) return "Select Source Storage (Where product IS)";
+    if (selectedStorages.length === 0) return "Select Storage";
     if (selectedStorages.length === 1) {
       const storage = storages.find(s => s.id === selectedStorages[0]);
       return storage ? storage.name : selectedStorages[0];
