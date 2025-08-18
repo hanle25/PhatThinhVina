@@ -375,6 +375,44 @@ def assign_trucks(orders):
             for batch_orders in batches:
                 storage_ids = list({order["StorageID"] for order in batch_orders})[:MAX_STORAGE_STOPS]
                 total_effective_space = sum(calculate_effective_space(o) for o in batch_orders)
+
+                # If this batch serves a small number of customers (< 4) but the
+                # combined load exceeds 2.4t, try to split into at most two
+                # 2.4t contract trucks to optimize delivery cost (use contract first).
+                unique_non_transfer_customers = {
+                    o.get("CustomerID") for o in batch_orders if o.get("CustomerID") != "TRANSFER"
+                }
+                num_customers_in_batch = len([cid for cid in unique_non_transfer_customers if cid])
+                if (
+                    num_customers_in_batch > 0
+                    and num_customers_in_batch < 4
+                    and total_effective_space > CONTRACT_CAPACITY
+                    and len(contract_vehicles_used) < len(contract)
+                ):
+                    # Prepare orders such that every line can fit into 2.4t, then pack
+                    # with a bin packer targeting 2.4t capacity per truck.
+                    pre_24_chunks = split_orders_by_capacity(batch_orders, CONTRACT_CAPACITY)
+                    flat_24_orders = [o for ch in pre_24_chunks for o in ch]
+                    two_packed = pack_orders_into_trucks(flat_24_orders, CONTRACT_CAPACITY)
+
+                    # Only apply this optimization if we can satisfy with <= 2 contract trucks
+                    # and we have enough contract vehicles available.
+                    if 1 < len(two_packed) <= 2 and (len(contract_vehicles_used) + len(two_packed) <= len(contract)):
+                        def batch_mixes_cuchi_brenntag(sub):
+                            sub_sids = {o.get("StorageID") for o in sub if o.get("StorageID")}
+                            sub_to_sids = {o.get("toStorage") for o in sub if o.get("toStorage")}
+                            all_ids = (sub_sids | sub_to_sids)
+                            return ("S00002" in all_ids) and ("S00003" in all_ids)
+
+                        # If any sub-batch mixes Cu Chi and Brenntag, schedule it first so
+                        # it uses the first contract truck; otherwise order doesn't matter.
+                        ordered_subs = sorted(two_packed, key=lambda b: 0 if batch_mixes_cuchi_brenntag(b) else 1)
+
+                        for sub in ordered_subs:
+                            temp_group_member = {"CustomerID": next(iter(unique_non_transfer_customers)), "orders": sub}
+                            assign_group([temp_group_member])
+                        continue
+
                 co_loaded_entries = []  # (from_sid, to_sid, weight) co-loaded onto this vehicle
 
                 # Check if both Cu Chi (S00002) and BRENNTAG (S00003) storages are needed
@@ -824,7 +862,7 @@ def get_catalogs():
 def assign_trucks_endpoint():
     if request.method == "OPTIONS":
         response = make_response('', 200)
-        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000" #http://192.168.1.18:3000
+        response.headers["Access-Control-Allow-Origin"] = "http://192.168.1.18:3000" #http://192.168.1.18:3000
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type"
         return response
